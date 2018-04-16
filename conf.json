@@ -1,0 +1,8 @@
+{
+    "versions" : {
+        "V3.0" : "release-V3.0",
+        "V3.1" : "release-V3.1"
+    },
+    "repo" : [ "git@github.com:corda/corda.git", "corda_repo" ],
+    "primary" : "V3.1"
+}
