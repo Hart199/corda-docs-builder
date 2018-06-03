@@ -31,6 +31,11 @@ def parseConfig (configFile) :
         if "output" not in config :
             config["output"] = os.path.join(os.getcwd(), "build")
 
+        if "git_config" not in config :
+            config['git_config'] = os.devnull
+        else :
+            config['git_config'] = os.path.join(config['output'], config['git_config'])
+
         return config
 
 #
@@ -40,10 +45,17 @@ def buildVersion(config, version, tag) :
     os.chdir (os.path.join (config['output'], config['repo'][1]))
 
     # checkout the tag, should really check that this succeeds
-    subprocess.call (["git", "checkout", tag])
+    subprocess.call (["git", "checkout", tag],
+        stdout=config['git_output_file'],
+        stderr=subprocess.STDOUT
+    )
 
     # build the docs
-    subprocess.call (["./gradlew", "clean", "makedocs"])
+    subprocess.call (
+        ["./gradlew", "clean", "makedocs"],
+        stdout=config['git_output_file'],
+        stderr=subprocess.STDOUT
+    )
 
     shutil.copytree(
             os.path.join(os.getcwd(), "docs", "build"),
@@ -58,15 +70,24 @@ def buildVersion(config, version, tag) :
 def run(config) :
     if os.path.exists (config['output']) and config['clean'] :
         dbg(config, "Cleaning local build dir")
+
         shutil.rmtree(config['output'])
 
     if not os.path.exists (config['output']) :
         dbg(config, "Create output directory")
+
         os.makedirs(config['output'])
 
     os.chdir (config['output'])
+
     if not os.path.exists (os.path.join (config['output'], config['repo'][1])) :
-        subprocess.call (["git", "clone", config['repo'][0], config['repo'][1]])
+        dbg(config, "Cloning repository " + config['repo'][1])
+
+        subprocess.call (
+            ["git", "clone", config['repo'][0], config['repo'][1]],
+            stdout=config['git_output_file'],
+            stderr=subprocess.STDOUT
+        )
 
     for version, tag in config['versions'].iteritems() :
         buildVersion(config, version, tag)
@@ -76,20 +97,29 @@ def run(config) :
 #
 def main(argv) :
     try:
-        opts, _ = getopt.getopt(argv,"hc:Cv",["configFile=","clean"])
+        opts, _ = getopt.getopt(argv,"hc:CvV:",["configFile=","clean", "version="])
     except getopt.GetoptError:
         help(2)
 
     configFile = "./conf.json"
+    specificVersion = None
 
     for opt, arg in opts:
         if opt == '-h': help(0)
         elif opt in ("-c", "--configFile") : configFile = arg
         elif opt in ("-C", "--clean") : clean = True
         elif opt in ("-v") : verbose = True
+        elif opt in ("-V", "--version") : specificVersion = arg
 
     # load *and* validate the config
     conf = parseConfig(configFile)
+
+    if specificVersion is not None :
+        if specificVersion not in conf['versions'] :
+            print "-V / --version option " + specificVersion + " not configured"
+            sys.exit(1)
+
+        conf['versions'] = { specificVersion : conf['versions'][specificVersion] }
 
     # explicitly override whatever was set in the config file
     try :
@@ -101,6 +131,8 @@ def main(argv) :
         conf['verbose'] = verbose
     except UnboundLocalError :
         conf['verbose'] = False
+
+    conf['git_output_file'] = open(conf['git_output'], 'w')
 
     # actually run the code
     run(conf)
