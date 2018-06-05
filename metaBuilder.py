@@ -54,7 +54,7 @@ def buildVersion(config, version, tag) :
     if os.name == 'nt' :
         gradleExec="gradlew.bat"
     else :
-        gradleExec="./gradle"
+        gradleExec="./gradlew"
 
     subprocess.call (
         [gradleExec , "clean", "makedocs"],
