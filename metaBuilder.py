@@ -64,7 +64,7 @@ def buildVersion(config, version, tag) :
 
     shutil.copytree(
             os.path.join(os.getcwd(), "docs", "build"),
-            os.path.join(config['output'], version))
+            os.path.join(config['output'], "output", version))
 
     os.chdir (config['output'])
 
@@ -82,6 +82,7 @@ def run(config) :
         dbg(config, "Create output directory " + config["output"])
 
         os.makedirs(config['output'])
+        os.makedirs(os.path.join(config['output'], "output"))
 
     os.chdir (config['output'])
 
