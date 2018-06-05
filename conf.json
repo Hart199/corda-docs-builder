@@ -3,7 +3,7 @@
         "V3.0" : "release-V3.0",
         "V3.1" : "release-V3.1"
     },
-    "repo" : [ "git@github.com:corda/corda.git", "corda_repo" ],
+    "repo" : [ "https://github.com/corda/corda.git", "corda_repo" ],
     "git_output" : "git.op",
     "primary" : "V3.1"
 }

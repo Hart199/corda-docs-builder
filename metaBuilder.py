@@ -51,8 +51,13 @@ def buildVersion(config, version, tag) :
     )
 
     # build the docs
+    if os.name == 'nt' :
+        gradleExec="gradlew.bat"
+    else :
+        gradleExec="./gradle"
+
     subprocess.call (
-        ["./gradlew", "clean", "makedocs"],
+        [gradleExec , "clean", "makedocs"],
         stdout=config['git_output_file'],
         stderr=subprocess.STDOUT
     )
@@ -69,12 +74,12 @@ def buildVersion(config, version, tag) :
 #
 def run(config) :
     if os.path.exists (config['output']) and config['clean'] :
-        dbg(config, "Cleaning local build dir")
+        dbg(config, "Cleaning local build dir " + config["output"])
 
         shutil.rmtree(config['output'])
 
     if not os.path.exists (config['output']) :
-        dbg(config, "Create output directory")
+        dbg(config, "Create output directory " + config["output"])
 
         os.makedirs(config['output'])
 
@@ -83,11 +88,15 @@ def run(config) :
     if not os.path.exists (os.path.join (config['output'], config['repo'][1])) :
         dbg(config, "Cloning repository " + config['repo'][1])
 
-        subprocess.call (
+        retval = subprocess.call (
             ["git", "clone", config['repo'][0], config['repo'][1]],
             stdout=config['git_output_file'],
             stderr=subprocess.STDOUT
         )
+
+        if retval != 0 :
+            dbg (config, "Git clone has failed for " + config['repo'][0] + " - please read " + config['git_output_file'].name + " for more information")
+            sys.exit()
 
     for version, tag in config['versions'].iteritems() :
         buildVersion(config, version, tag)
