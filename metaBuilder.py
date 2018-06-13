@@ -69,6 +69,14 @@ def buildVersion(config, version, tag) :
     os.chdir (config['output'])
 
 #
+# Copy the default version to the standard location for the default version (as per current docsite configuration)
+#
+def createDefault(config) :
+    shutil.copytree (
+        os.path.join(config['output'], config['primary']),
+        os.path.join(config['output'], 'docs-head'))
+
+#
 # Main wrapper to clean up existing builds, checkout the source
 # and drive individual builds of speicifc versions
 #
@@ -102,6 +110,9 @@ def run(config) :
     for version, tag in config['versions'].iteritems() :
         buildVersion(config, version, tag)
 
+    if (config['buildDefault']) :
+        createDefault(config)
+
 #
 # main driver, invoked by script entry
 #
@@ -130,6 +141,8 @@ def main(argv) :
             sys.exit(1)
 
         conf['versions'] = { specificVersion : conf['versions'][specificVersion] }
+
+    conf['buildDefault'] = specificVersion is not None
 
     # explicitly override whatever was set in the config file
     try :
